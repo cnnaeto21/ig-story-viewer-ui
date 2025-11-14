@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { api } from '../../lib/api';
 import type { User, WatchlistEntry, Notification } from '../../types/api';
 
@@ -76,23 +77,23 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Story Watcher</h1>
-            <p className="text-sm text-gray-600">@{user?.igUsername}</p>
-          </div>
-          <button
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Story Watcher</h1>
+            <p className="text-xs sm:text-sm text-gray-600">@{user?.igUsername}</p>
+            </div>
+            <button
             onClick={handleLogout}
-            className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 border border-gray-300 rounded-md hover:bg-gray-50"
-          >
+            className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 border border-gray-300 rounded-md hover:bg-gray-50"
+            >
             Logout
-          </button>
+            </button>
         </div>
-      </header>
+    </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Left Column - Watchlist & Search */}
           <div className="lg:col-span-2 space-y-6">
             {/* Watchlist Section */}
@@ -132,19 +133,18 @@ function WatchlistSection({ watchlist, onUpdate }: WatchlistSectionProps) {
   const [adding, setAdding] = useState(false);
   const [checking, setChecking] = useState(false);
   const [checkResult, setCheckResult] = useState<any>(null);
-  const [error, setError] = useState('');
 
   const handleAddToWatchlist = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setAdding(true);
 
     try {
       await api.addToWatchlist(newUsername);
+      toast.success(`Added @${newUsername} to watchlist!`);
       setNewUsername('');
       onUpdate(); // Refresh watchlist
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add user');
+      toast.error(err instanceof Error ? err.message : 'Failed to add user');
     } finally {
       setAdding(false);
     }
@@ -153,75 +153,75 @@ function WatchlistSection({ watchlist, onUpdate }: WatchlistSectionProps) {
   const handleRemoveFromWatchlist = async (username: string) => {
     try {
       await api.removeFromWatchlist(username);
+      toast.success(`Removed @${username} from watchlist`);
       onUpdate(); // Refresh watchlist
     } catch (err) {
-      console.error('Failed to remove user:', err);
+      toast.error(err instanceof Error ? err.message : 'Failed to remove user');
     }
   };
 
   const handleCheckWatchlist = async () => {
     setChecking(true);
     setCheckResult(null);
-    setError('');
 
     try {
       const result = await api.pollStories();
       setCheckResult(result);
+      toast.success('Watchlist checked successfully!');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to check stories');
+      toast.error(err instanceof Error ? err.message : 'Failed to check stories');
     } finally {
       setChecking(false);
     }
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">
+    <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+      <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">
         ⭐ Watchlist
       </h2>
 
       {/* Add to Watchlist Form */}
-      <form onSubmit={handleAddToWatchlist} className="mb-4">
-        <div className="flex gap-2">
-          <input
+      <form onSubmit={handleAddToWatchlist} className="mb-3 sm:mb-4">
+        <div className="flex flex-col sm:flex-row gap-2">
+        <input
             type="text"
             value={newUsername}
             onChange={(e) => setNewUsername(e.target.value)}
             placeholder="Instagram username"
-            className="flex-1 px-3 py-2 border rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <button
+            className="flex-1 px-3 py-3 sm:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
+        />
+        <button
             type="submit"
             disabled={adding || !newUsername}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-          >
+            className="w-full sm:w-auto px-4 py-3 sm:py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 font-medium"
+        >
             {adding ? 'Adding...' : 'Add'}
-          </button>
+        </button>
         </div>
-        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-      </form>
+   </form>
 
       {/* Watchlist Items */}
-      <div className="space-y-2 mb-4">
+      <div className="space-y-2 mb-3 sm:mb-4">
         {watchlist.length === 0 ? (
-          <p className="text-gray-500 text-sm">No users in watchlist yet</p>
+            <p className="text-gray-500 text-sm">No users in watchlist yet</p>
         ) : (
-          watchlist.map((item) => (
+            watchlist.map((item) => (
             <div
-              key={item.id}
-              className="flex items-center justify-between p-3 bg-gray-50 rounded-md"
+                key={item.id}
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-md gap-2"
             >
-              <span className="font-medium text-gray-900">
+                <span className="font-medium text-gray-900 truncate">
                 @{item.target_username}
-              </span>
-              <button
+                </span>
+                <button
                 onClick={() => handleRemoveFromWatchlist(item.target_username)}
-                className="text-red-600 hover:text-red-700 text-sm"
-              >
+                className="text-red-600 hover:text-red-700 text-sm whitespace-nowrap px-2 py-1"
+                >
                 Remove
-              </button>
+                </button>
             </div>
-          ))
+            ))
         )}
       </div>
 
@@ -229,8 +229,8 @@ function WatchlistSection({ watchlist, onUpdate }: WatchlistSectionProps) {
       <button
         onClick={handleCheckWatchlist}
         disabled={checking || watchlist.length === 0}
-        className="w-full py-3 bg-blue-600 text-white rounded-md font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
+        className="w-full py-3 sm:py-3 bg-blue-600 text-white rounded-md font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-base"
+        >
         {checking ? '🔄 Checking...' : '🔄 Check Watchlist Now'}
       </button>
 
@@ -265,52 +265,50 @@ function SearchSection() {
     const [filteredViewers, setFilteredViewers] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [loadingViewers, setLoadingViewers] = useState(false);
-    const [error, setError] = useState('');
-    
+
     // Labels state
     const [storyLabels, setStoryLabels] = useState<Record<string, string>>({});
     const [editingStoryId, setEditingStoryId] = useState<string | null>(null);
     const [editLabel, setEditLabel] = useState('');
-  
+
     // Load stories
     const loadStories = async () => {
       setLoading(true);
-      setError('');
-  
+
       try {
         const [storiesResult, labelsResult] = await Promise.all([
           api.getMyStories(),
           api.getStoryLabels(),
         ]);
-  
+
         setStories(storiesResult.stories);
         setStoryLabels(labelsResult.labels);
-        
+
         if (storiesResult.stories.length > 0) {
           setSelectedStory(storiesResult.stories[0].id);
         }
+        toast.success('Stories loaded successfully!');
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load stories');
+        toast.error(err instanceof Error ? err.message : 'Failed to load stories');
       } finally {
         setLoading(false);
       }
     };
-  
+
     // Load viewers when story is selected
     const loadViewers = async (storyId: string) => {
       if (!storyId) return;
-  
+
       setLoadingViewers(true);
-      setError('');
       setSearchQuery(''); // Reset search when changing stories
-  
+
       try {
         // Fetch all viewers (no search filter)
         const result = await api.searchStoryViewers(storyId);
         setAllViewers(result.viewers);
         setFilteredViewers(result.viewers.slice(0, 5)); // Show first 5
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load viewers');
+        toast.error(err instanceof Error ? err.message : 'Failed to load viewers');
         setAllViewers([]);
         setFilteredViewers([]);
       } finally {
@@ -361,8 +359,9 @@ function SearchSection() {
           [storyId]: editLabel
         }));
         setEditingStoryId(null);
+        toast.success('Story label updated!');
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to update label');
+        toast.error(err instanceof Error ? err.message : 'Failed to update label');
       }
     };
   
@@ -392,88 +391,93 @@ function SearchSection() {
         {stories.length > 0 && (
           <div className="space-y-4">
             {/* Story List with Edit Labels */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="space-y-2 mb-3 sm:mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
                 Your Stories
-              </label>
-              <div className="space-y-2">
+            </label>
+            <div className="space-y-2">
                 {stories.map((story) => (
-                  <div
+                <div
                     key={story.id}
                     className={`p-3 border rounded-md cursor-pointer transition-colors ${
-                      selectedStory === story.id
+                    selectedStory === story.id
                         ? 'border-blue-500 bg-blue-50'
                         : 'border-gray-300 hover:border-gray-400'
                     }`}
                     onClick={() => setSelectedStory(story.id)}
-                  >
+                >
                     {editingStoryId === story.id ? (
-                      // Edit Mode
-                      <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                    // Edit Mode
+                    <div className="flex flex-col sm:flex-row gap-2" onClick={(e) => e.stopPropagation()}>
                         <input
-                          type="text"
-                          value={editLabel}
-                          onChange={(e) => setEditLabel(e.target.value)}
-                          placeholder="Story label (e.g., 'Beach Day')"
-                          className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm"
-                          autoFocus
+                        type="text"
+                        value={editLabel}
+                        onChange={(e) => setEditLabel(e.target.value)}
+                        placeholder="Story label"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded text-base"
+                        autoFocus
                         />
+                        <div className="flex gap-2">
                         <button
-                          onClick={() => handleSaveLabel(story.id)}
-                          className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                            onClick={() => handleSaveLabel(story.id)}
+                            className="flex-1 sm:flex-none px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
                         >
-                          Save
+                            Save
                         </button>
                         <button
-                          onClick={handleCancelEdit}
-                          className="px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300"
+                            onClick={handleCancelEdit}
+                            className="flex-1 sm:flex-none px-4 py-2 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300"
                         >
-                          Cancel
+                            Cancel
                         </button>
-                      </div>
+                        </div>
+                    </div>
                     ) : (
-                      // Display Mode
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <p className="font-medium text-gray-900">
+                    // Display Mode - Already good for mobile
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 truncate">
                             {storyLabels[story.id] || 'Untitled Story'}
-                          </p>
-                          <p className="text-sm text-gray-600">
+                        </p>
+                        <p className="text-sm text-gray-600 truncate">
                             {new Date(story.takenAt).toLocaleString()} • {story.viewerCount} viewers
-                          </p>
+                        </p>
                         </div>
                         <button
-                          onClick={(e) => {
+                        onClick={(e) => {
                             e.stopPropagation();
                             handleEditLabel(story.id, storyLabels[story.id]);
-                          }}
-                          className="text-blue-600 hover:text-blue-700 text-sm"
+                        }}
+                        className="text-blue-600 hover:text-blue-700 text-sm whitespace-nowrap px-2 py-1"
                         >
-                          Edit
+                        Edit
                         </button>
-                      </div>
+                    </div>
                     )}
-                  </div>
+                </div>
                 ))}
-              </div>
+            </div>
             </div>
   
             {/* Search Input (Real-time) */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+            <div className="mb-3 sm:mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
                 Search Viewers
-              </label>
-              <input
+            </label>
+            <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search for people who may have viewed your story..."
+                placeholder="Type to filter..."
                 disabled={loadingViewers}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-              />
-              <p className="mt-1 text-xs text-gray-500">
-                {searchQuery ? `Showing ${filteredViewers.length} results` : `Showing first 5 of ${allViewers.length} viewers`}
-              </p>
+                className="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 text-base"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+                {searchQuery 
+                ? `${filteredViewers.length} results` 
+                : `Showing first 5 of ${allViewers.length}`
+                }
+            </p>
             </div>
   
             {/* Loading State */}
@@ -486,29 +490,28 @@ function SearchSection() {
   
             {/* Viewers List */}
             {!loadingViewers && filteredViewers.length > 0 && (
-              <div>
-                <p className="text-sm font-medium text-gray-700 mb-2">
-                  Viewers {searchQuery && `(filtered)`}
-                </p>
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {filteredViewers.map((viewer: any) => (
-                    <div
-                      key={viewer.userId}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-md"
-                    >
-                      <div>
-                        <p className="font-medium text-gray-900">@{viewer.username}</p>
-                        <p className="text-sm text-gray-600">{viewer.fullName}</p>
-                      </div>
-                      {viewer.inWatchlist && (
-                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                          ⭐ In Watchlist
-                        </span>
-                      )}
-                    </div>
-                  ))}
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+              {filteredViewers.map((viewer: any) => (
+                <div
+                  key={viewer.userId}
+                  className="flex items-start sm:items-center justify-between p-3 bg-gray-50 rounded-md gap-2"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 truncate">
+                      @{viewer.username}
+                    </p>
+                    <p className="text-sm text-gray-600 truncate">
+                      {viewer.fullName}
+                    </p>
+                  </div>
+                  {viewer.inWatchlist && (
+                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded whitespace-nowrap">
+                      ⭐ Watchlist
+                    </span>
+                  )}
                 </div>
-              </div>
+              ))}
+            </div>
             )}
   
             {/* No Results */}
@@ -526,10 +529,6 @@ function SearchSection() {
             )}
           </div>
         )}
-  
-        {error && (
-          <p className="mt-4 text-sm text-red-600">{error}</p>
-        )}
       </div>
     );
   }
@@ -546,73 +545,75 @@ function NotificationsSection({ notifications, onUpdate }: NotificationsSectionP
   const handleMarkAsRead = async (notificationId: string) => {
     try {
       await api.markNotificationAsRead(notificationId);
+      toast.success('Notification marked as read');
       onUpdate();
     } catch (err) {
-      console.error('Failed to mark as read:', err);
+      toast.error(err instanceof Error ? err.message : 'Failed to mark as read');
     }
   };
 
   const handleMarkAllAsRead = async () => {
     try {
       await api.markAllNotificationsAsRead();
+      toast.success('All notifications marked as read');
       onUpdate();
     } catch (err) {
-      console.error('Failed to mark all as read:', err);
+      toast.error(err instanceof Error ? err.message : 'Failed to mark all as read');
     }
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold text-gray-900">
-          🔔 Notifications
+    <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+    <div className="flex items-center justify-between mb-3 sm:mb-4">
+        <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
+        🔔 Notifications
         </h2>
         {notifications.length > 0 && (
-          <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full min-w-[20px] text-center">
             {notifications.length}
-          </span>
+        </span>
         )}
-      </div>
+    </div>
 
-      {notifications.length === 0 ? (
+    {notifications.length === 0 ? (
         <p className="text-gray-500 text-sm">No new notifications</p>
-      ) : (
+    ) : (
         <>
-          <button
+        <button
             onClick={handleMarkAllAsRead}
-            className="w-full mb-4 py-2 text-sm text-blue-600 hover:text-blue-700 border border-blue-200 rounded-md hover:bg-blue-50"
-          >
+            className="w-full mb-3 sm:mb-4 py-2 text-sm text-blue-600 hover:text-blue-700 border border-blue-200 rounded-md hover:bg-blue-50"
+        >
             Mark all as read
-          </button>
+        </button>
 
-          <div className="space-y-3">
+        <div className="space-y-3">
             {notifications.map((notification) => (
-              <div
+            <div
                 key={notification.id}
                 className="p-3 bg-blue-50 border border-blue-200 rounded-md"
-              >
-                <p className="font-medium text-gray-900 text-sm">
-                  {notification.title}
+            >
+                <p className="font-medium text-gray-900 text-sm break-words">
+                {notification.title}
                 </p>
-                <p className="text-xs text-gray-600 mt-1">
-                  {notification.message}
+                <p className="text-xs text-gray-600 mt-1 break-words">
+                {notification.message}
                 </p>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-xs text-gray-500">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
+                <span className="text-xs text-gray-500">
                     {new Date(notification.created_at).toLocaleString()}
-                  </span>
-                  <button
+                </span>
+                <button
                     onClick={() => handleMarkAsRead(notification.id)}
-                    className="text-xs text-blue-600 hover:text-blue-700"
-                  >
+                    className="text-xs text-blue-600 hover:text-blue-700 text-left sm:text-right"
+                >
                     Mark as read
-                  </button>
+                </button>
                 </div>
-              </div>
+            </div>
             ))}
-          </div>
+        </div>
         </>
-      )}
+    )}
     </div>
   );
 }
