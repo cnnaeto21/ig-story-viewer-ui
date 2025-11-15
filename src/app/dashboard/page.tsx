@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { api } from '../../lib/api';
 import type { User, WatchlistEntry, Notification } from '../../types/api';
+import { analytics } from '../../lib/analytics';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -52,6 +53,7 @@ export default function DashboardPage() {
   const handleLogout = async () => {
     try {
       await api.logout();
+      analytics.track('Logout');
       router.push('/login');
     } catch (error) {
       console.error('Logout failed:', error);
@@ -143,8 +145,13 @@ function WatchlistSection({ watchlist, onUpdate }: WatchlistSectionProps) {
       toast.success(`Added @${newUsername} to watchlist!`);
       setNewUsername('');
       onUpdate(); // Refresh watchlist
+      analytics.track('Added to Watchlist', {
+        username: newUsername,
+        watchlistCount: watchlist.length + 1
+      });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to add user');
+      analytics.track('watchlist_add_user_error', { username: newUsername, error: err instanceof Error ? err.message : 'Failed to add user' });
     } finally {
       setAdding(false);
     }
@@ -154,6 +161,10 @@ function WatchlistSection({ watchlist, onUpdate }: WatchlistSectionProps) {
     try {
       await api.removeFromWatchlist(username);
       toast.success(`Removed @${username} from watchlist`);
+      analytics.track('Removed from Watchlist', {
+        username,
+        watchlistCount: watchlist.length - 1
+      });
       onUpdate(); // Refresh watchlist
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to remove user');
@@ -167,6 +178,11 @@ function WatchlistSection({ watchlist, onUpdate }: WatchlistSectionProps) {
     try {
       const result = await api.pollStories();
       setCheckResult(result);
+      analytics.track('Checked Watchlist', {
+        storiesFound: result.summary?.totalStories || 0,
+        viewersFound: result.summary?.totalWatchlistViews || 0,
+        matchedUsers: result.watchlistUsersWhoViewed?.length || 0
+      });
       toast.success('Watchlist checked successfully!');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to check stories');
@@ -283,6 +299,9 @@ function SearchSection() {
 
         setStories(storiesResult.stories);
         setStoryLabels(labelsResult.labels);
+        analytics.track('Loaded Stories', {
+            count: storiesResult.stories.length
+          });
 
         if (storiesResult.stories.length > 0) {
           setSelectedStory(storiesResult.stories[0].id);
@@ -340,6 +359,11 @@ function SearchSection() {
           return usernameMatch || fullNameMatch;
         });
         setFilteredViewers(filtered);
+        analytics.track('Searched Viewers', {
+            query: searchQuery,
+            resultsCount: filtered.length,
+            totalViewers: allViewers.length
+          });
       }, 300);
   
       return () => clearTimeout(timer);
@@ -358,6 +382,11 @@ function SearchSection() {
           ...prev,
           [storyId]: editLabel
         }));
+        analytics.track('Story Labeled', {
+            storyId,
+            labelLength: editLabel.length,
+            hasLabel: editLabel.length > 0
+          });
         setEditingStoryId(null);
         toast.success('Story label updated!');
       } catch (err) {

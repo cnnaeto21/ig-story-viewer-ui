@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { api } from '../../lib/api';
+import { analytics } from '../../lib/analytics';
 
 export default function LoginPage() {
   // State for form inputs
@@ -26,6 +27,7 @@ export default function LoginPage() {
 
       toast.success('Login successful! Redirecting...');
       // Login successful - redirect to dashboard
+      analytics.track('login_success');
       router.push('/dashboard');
     } catch (err) {
       // Login failed - show error toast
