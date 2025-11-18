@@ -49,7 +49,7 @@ export default function LoginPage() {
         </h2>
         <p className="text-xs sm:text-sm text-gray-600 font-bold">Tired of scrolling through hundreds of people just to see if your crush has viewed your story?</p>
         <p className="mt-2 text-sm text-gray-600">
-          Sign in with your Instagram account and we'll let you search through who has viewed your story viwers easily!
+          Sign in with your Instagram account and we'll let you search through who has viewed your story easily!
         </p>
       </div>
 
