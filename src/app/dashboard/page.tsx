@@ -401,10 +401,21 @@ function SearchSection() {
   
     return (
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-          🔍 Search Viewers
-        </h2>
-  
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-gray-900">
+            🔍 Search Viewers
+          </h2>
+          {stories.length > 0 && (
+            <button
+              onClick={loadStories}
+              disabled={loading}
+              className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50"
+            >
+              {loading ? 'Reloading...' : 'Refresh Stories'}
+            </button>
+          )}
+        </div>
+
         {/* Load Stories Button */}
         {stories.length === 0 && (
           <button
