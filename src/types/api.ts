@@ -12,6 +12,7 @@
 export interface LoginRequest {
     igUsername: string;
     igPassword: string;
+    email: string;
   }
   
   export interface LoginResponse {

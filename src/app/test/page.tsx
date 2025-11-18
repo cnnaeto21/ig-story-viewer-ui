@@ -11,6 +11,7 @@ export default function TestPage() {
       const response = await api.login({
         igUsername: 'banneryear2024',
         igPassword: 'YOUR_PASSWORD',
+        email: 'test@test.com',
       });
       setResult(JSON.stringify(response, null, 2));
     } catch (error) {
