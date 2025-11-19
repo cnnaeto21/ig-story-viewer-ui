@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { api } from '../../lib/api';
 import type { User, WatchlistEntry, Notification } from '../../types/api';
 import { analytics } from '../../lib/analytics';
+import { Avatar } from '../../components/ui/Avatar';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -227,9 +228,12 @@ function WatchlistSection({ watchlist, onUpdate }: WatchlistSectionProps) {
                 key={item.id}
                 className="flex items-center justify-between p-3 bg-gray-50 rounded-md gap-2"
             >
+               <div className="flex items-center gap-3 flex-1 min-w-0">
+                <Avatar username={item.target_username} src={item.profile_pic_url} size="small" />
                 <span className="font-medium text-gray-900 truncate">
-                @{item.target_username}
+                  @{item.target_username}
                 </span>
+              </div>
                 <button
                 onClick={() => handleRemoveFromWatchlist(item.target_username)}
                 className="text-red-600 hover:text-red-700 text-sm whitespace-nowrap px-2 py-1"
@@ -252,20 +256,37 @@ function WatchlistSection({ watchlist, onUpdate }: WatchlistSectionProps) {
 
       {/* Check Results */}
       {checkResult && (
-        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
-          <p className="font-semibold text-blue-900 mb-2">Results:</p>
-          <ul className="text-sm text-blue-800 space-y-1">
-            <li>• Stories: {checkResult.summary?.totalStories || 0}</li>
-            <li>• Watchlist views: {checkResult.summary?.totalWatchlistViews || 0}</li>
-            {checkResult.watchlistUsersWhoViewed?.length > 0 && (
-              <li>
-                • Viewers: {checkResult.watchlistUsersWhoViewed.join(', ')}
-              </li>
-            )}
-          </ul>
+  <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+    <p className="font-semibold text-blue-900 mb-2">Results:</p>
+    <ul className="text-sm text-blue-800 space-y-1 mb-3">
+      <li>• Stories: {checkResult.summary?.totalStories || 0}</li>
+      <li>• Watchlist views: {checkResult.summary?.totalWatchlistViews || 0}</li>
+    </ul>
+    
+    {/* Viewers with Avatars */}
+    {checkResult.watchlistUsersWhoViewed?.length > 0 && (
+        <div>
+          <p className="text-sm text-blue-800 font-medium mb-2">
+            • Viewers from your watchlist:
+          </p>
+          <div className="flex flex-wrap gap-2 ml-4">
+            {checkResult.watchlistUsersWhoViewed.map((username: string, index: number) => (
+              <div 
+                key={index}
+                className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-full border border-blue-200"
+              >
+                <Avatar username={username} size="small" />
+                <span className="text-sm font-medium text-blue-900">
+                  @{username}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
+    )}
+  </div>
   );
 }
 
@@ -523,7 +544,7 @@ function SearchSection() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Type to filter..."
+                placeholder="Type to search through viewers..."
                 disabled={loadingViewers}
                 className="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 text-base"
             />
@@ -551,6 +572,7 @@ function SearchSection() {
                   key={viewer.userId}
                   className="flex items-start sm:items-center justify-between p-3 bg-gray-50 rounded-md gap-2"
                 >
+                  <Avatar username={viewer.username} src={viewer.profilePicUrl} size="medium" />
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-gray-900 truncate">
                       @{viewer.username}

@@ -47,9 +47,9 @@ export default function LoginPage() {
         setError(err instanceof Error ? err.message : 'Login failed');
       }
       analytics.track('Login Failed', {
-        error: err instanceof Error ? err.message : 'Unknown error'
+        error: err instanceof Error ? err.message : 'Login failed'
       });
-      toast.error(error);
+      toast.error(err instanceof Error ? err.message : 'Login failed');
     } finally {
       setLoading(false);
     }

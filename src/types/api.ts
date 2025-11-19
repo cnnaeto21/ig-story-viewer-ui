@@ -45,9 +45,11 @@ export interface LoginRequest {
   export interface WatchlistEntry {
     id: string;
     target_username: string;
-    target_user_id?: string;
+    target_user_id: string;
+    profile_pic_url: string;
+    full_name: string;
     added_at: string;
-    last_checked_at?: string;
+    last_checked_at: string | null;
   }
   
   export interface WatchlistResponse {
@@ -118,3 +120,6 @@ export interface LoginRequest {
     error: string;
     message?: string;
   }
+
+
+  
