@@ -13,14 +13,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState('');
 
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); // Prevent page reload
     setLoading(true);
-    setError(null); // Clear previous errors
+    setError(''); 
 
     try {
       await api.login({
@@ -34,21 +34,22 @@ export default function LoginPage() {
       analytics.track('login_success');
       router.push('/dashboard');
     } catch (err) {
-      // Store error in state
-      const errorObj = err instanceof Error ? err : new Error('Login failed');
-      setError(errorObj);
 
       // Login failed - show error toast
       if (err instanceof Error && err.message.includes('email to help you')) {
-        toast.error(
+        setError(
           'Instagram requires verification. Please:\n' +
           '1. Login to Instagram app/website manually\n' +
           '2. Complete email verification\n' +
           '3. Try again in 24 hours'
         );
       } else {
-        toast.error(err instanceof Error ? err.message : 'Login failed');
+        setError(err instanceof Error ? err.message : 'Login failed');
       }
+      analytics.track('Login Failed', {
+        error: err instanceof Error ? err.message : 'Unknown error'
+      });
+      toast.error(error);
     } finally {
       setLoading(false);
     }
@@ -67,7 +68,7 @@ export default function LoginPage() {
           Sign in with your Instagram account and we'll let you search through who has viewed your story easily!
         </p>
       </div>
-      {error && error.message.includes('email to help you') && (
+      {error && (
         <div className="mb-4 p-4 bg-amber-50 border-l-4 border-amber-500 rounded">
           <div className="flex">
             <div className="flex-shrink-0">
