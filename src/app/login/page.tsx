@@ -15,37 +15,45 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // State for verification flow
+  const [verificationRequired, setVerificationRequired] = useState(false);
+  const [verificationType, setVerificationType] = useState<string>('');
+  const [verificationIdentifier, setVerificationIdentifier] = useState<string>('');
+  const [verificationMessage, setVerificationMessage] = useState<string>('');
+  const [verificationCode, setVerificationCode] = useState('');
+
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // Prevent page reload
+    e.preventDefault();
     setLoading(true);
-    setError(''); 
+    setError('');
 
     try {
-      await api.login({
+      const result = await api.login({
         igUsername: username,
         igPassword: password,
         email: email,
       });
 
-      toast.success('Login successful! Redirecting...');
-      // Login successful - redirect to dashboard
-      analytics.track('login_success');
-      router.push('/dashboard');
-    } catch (err) {
-
-      // Login failed - show error toast
-      if (err instanceof Error && err.message.includes('email to help you')) {
-        setError(
-          'Instagram requires verification. Please:\n' +
-          '1. Login to Instagram app/website manually\n' +
-          '2. Complete email verification\n' +
-          '3. Try again in 24 hours'
-        );
+      // Check if verification is required
+      if ('requiresVerification' in result && result.requiresVerification) {
+        setVerificationRequired(true);
+        setVerificationType(result.verificationType);
+        setVerificationIdentifier(result.identifier);
+        setVerificationMessage(result.message);
+        toast.info(result.message);
+        analytics.track('verification_required', {
+          type: result.verificationType
+        });
       } else {
-        setError(err instanceof Error ? err.message : 'Login failed');
+        // Normal login success
+        toast.success('Login successful! Redirecting...');
+        analytics.track('login_success');
+        router.push('/dashboard');
       }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed');
       analytics.track('Login Failed', {
         error: err instanceof Error ? err.message : 'Login failed'
       });
@@ -53,6 +61,41 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      await api.verifyLogin({
+        identifier: verificationIdentifier,
+        verificationCode: verificationCode,
+        verificationType: verificationType,
+      });
+
+      toast.success('Verification successful! Redirecting...');
+      analytics.track('verification_success', {
+        type: verificationType
+      });
+      router.push('/dashboard');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Verification failed');
+      analytics.track('verification_failed', {
+        type: verificationType,
+        error: err instanceof Error ? err.message : 'Verification failed'
+      });
+      toast.error(err instanceof Error ? err.message : 'Verification failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBackToLogin = () => {
+    setVerificationRequired(false);
+    setVerificationCode('');
+    setError('');
   };
 
   return (
@@ -68,38 +111,27 @@ export default function LoginPage() {
           Sign in with your Instagram account and we'll let you search through who has viewed your story easily!
         </p>
       </div>
+
       {error && (
-        <div className="mb-4 p-4 bg-amber-50 border-l-4 border-amber-500 rounded">
+        <div className="mb-4 p-4 bg-red-50 border-l-4 border-red-500 rounded">
           <div className="flex">
             <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-amber-500" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-amber-800 mb-1">
-                Verification Required
-              </h3>
-              <div className="text-sm text-amber-700 space-y-1">
-                <p>Instagram needs to verify this account. Please:</p>
-                <ol className="list-decimal list-inside space-y-1 mt-2">
-                  <li>Login to Instagram manually on their app/website</li>
-                  <li>Complete the email verification</li>
-                  <li>Wait 24 hours, then try again here</li>
-                </ol>
-                <p className="mt-2 text-xs italic">
-                  This is a one-time security check. Your account will work normally afterwards.
-                </p>
-              </div>
+              <p className="text-sm text-red-700">{error}</p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="mt-6 sm:mt-8 space-y-4 sm:space-y-6">
-        {/* Inputs */}
-        <div>
+      {!verificationRequired ? (
+        // Login Form
+        <form onSubmit={handleSubmit} className="mt-6 sm:mt-8 space-y-4 sm:space-y-6">
+          {/* Email Input */}
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Email
             </label>
@@ -112,50 +144,113 @@ export default function LoginPage() {
               required
             />
           </div>
-        <div>
-          <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-            Instagram Username
-          </label>
-          <input
-            id="username"
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-            className="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-base"
-            placeholder="your_username"
-          />
+
+          {/* Username Input */}
+          <div>
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+              Instagram Username
+            </label>
+            <input
+              id="username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              className="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-base"
+              placeholder="your_username"
+            />
+          </div>
+
+          {/* Password Input */}
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              Instagram Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-base"
+              placeholder="••••••••"
+            />
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Signing in...' : 'Sign in'}
+          </button>
+
+          {/* Security Notice */}
+          <p className="text-xs text-center text-gray-500">
+            🔒 Your credentials are encrypted and never stored
+          </p>
+        </form>
+      ) : (
+        // Verification Form
+        <div className="mt-6 sm:mt-8 space-y-4 sm:space-y-6">
+          {/* Verification Message */}
+          <div className="p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-blue-700">{verificationMessage}</p>
+              </div>
+            </div>
+          </div>
+
+          <form onSubmit={handleVerify} className="space-y-4">
+            {/* Verification Code Input */}
+            <div>
+              <label htmlFor="verificationCode" className="block text-sm font-medium text-gray-700">
+                Verification Code
+              </label>
+              <input
+                id="verificationCode"
+                type="text"
+                value={verificationCode}
+                onChange={(e) => setVerificationCode(e.target.value)}
+                required
+                className="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-base text-center text-2xl tracking-widest"
+                placeholder="000000"
+                maxLength={verificationType === 'two_factor' ? 6 : 8}
+              />
+            </div>
+
+            {/* Verify Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Verifying...' : 'Verify'}
+            </button>
+
+            {/* Back Button */}
+            <button
+              type="button"
+              onClick={handleBackToLogin}
+              className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Back to Login
+            </button>
+          </form>
+
+          {/* Security Notice */}
+          <p className="text-xs text-center text-gray-500">
+            🔒 Your verification code is sent securely
+          </p>
         </div>
-
-        <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-            Instagram Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-base"
-            placeholder="••••••••"
-          />
-        </div>
-
-        {/* Submit Button */}
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? 'Signing in...' : 'Sign in'}
-        </button>
-
-        {/* Security Notice */}
-        <p className="text-xs text-center text-gray-500">
-          🔒 Your credentials are encrypted and never stored
-        </p>
-      </form>
+      )}
     </div>
   </main>
   );

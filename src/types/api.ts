@@ -25,6 +25,30 @@ export interface LoginRequest {
       igUserId: string;
     };
   }
+
+  export interface VerificationRequiredResponse {
+    requiresVerification: true;
+    verificationType: 'two_factor' | 'challenge' | 'checkpoint';
+    identifier: string;
+    username: string;
+    message: string;
+  }
+
+  export interface VerifyRequest {
+    identifier: string;
+    verificationCode: string;
+    verificationType: string;
+  }
+
+  export interface VerifyResponse {
+    message: string;
+    token: string;
+    user: {
+      id: string;
+      igUsername: string;
+      igUserId: string;
+    };
+  }
   
   // ============================================
   // USER TYPES

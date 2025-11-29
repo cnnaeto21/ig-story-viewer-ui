@@ -2,6 +2,9 @@
 import type {
     LoginRequest,
     LoginResponse,
+    VerificationRequiredResponse,
+    VerifyRequest,
+    VerifyResponse,  
     User,
     WatchlistResponse,
     WatchlistEntry,
@@ -88,10 +91,24 @@ import type {
       }
   
     // AUTH METHODS
-    async login(credentials: LoginRequest): Promise<LoginResponse> {
-      const response = await this.request<LoginResponse>('/api/auth/login', {
+    async login(credentials: LoginRequest): Promise<LoginResponse | VerificationRequiredResponse> {
+      const response = await this.request<LoginResponse | VerificationRequiredResponse>('/api/auth/login', {
         method: 'POST',
         body: JSON.stringify(credentials),
+      });
+  
+      // Only set token if login was successful (not if verification is required)
+      if ('token' in response) {
+        this.setToken(response.token);
+      }
+  
+      return response;
+    }
+
+    async verifyLogin(verifyRequest: VerifyRequest): Promise<VerifyResponse> {
+      const response = await this.request<VerifyResponse>('/api/auth/verify', {
+        method: 'POST',
+        body: JSON.stringify(verifyRequest),
       });
       this.setToken(response.token);
       return response;
