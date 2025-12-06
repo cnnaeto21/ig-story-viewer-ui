@@ -53,10 +53,17 @@ export default function LoginPage() {
         router.push('/dashboard');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      const errorMessage = err instanceof Error ? err.message : 'Login failed';
+      setError(errorMessage);
+
+      // Track if manual verification is required for analytics
+      const requiresManualVerification = errorMessage.includes('Instagram flagged this login as suspicious');
+
       analytics.track('Login Failed', {
-        error: err instanceof Error ? err.message : 'Login failed'
+        error: errorMessage,
+        requiresManualVerification
       });
+
       toast.error(err instanceof Error ? err.message : 'Login failed');
     } finally {
       setLoading(false);
@@ -122,6 +129,16 @@ export default function LoginPage() {
             </div>
             <div className="ml-3">
               <p className="text-sm text-red-700">{error}</p>
+              {error.includes('Instagram flagged this login as suspicious') && (
+                <a
+                  href="https://www.instagram.com/accounts/login/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-500"
+                >
+                  Open Instagram to verify →
+                </a>
+              )}
             </div>
           </div>
         </div>
