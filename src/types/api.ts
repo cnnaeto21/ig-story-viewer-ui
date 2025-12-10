@@ -36,7 +36,7 @@ export interface LoginRequest {
 
   export interface VerifyRequest {
     identifier: string;
-    verificationCode: string;
+    code: string;
     verificationType: string;
   }
 

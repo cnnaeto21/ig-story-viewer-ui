@@ -78,7 +78,7 @@ export default function LoginPage() {
     try {
       await api.verifyLogin({
         identifier: verificationIdentifier,
-        verificationCode: verificationCode,
+        code: verificationCode,
         verificationType: verificationType,
       });
 
